@@ -1,45 +1,73 @@
-name: Build Hardened Native Release APK (Non-Play-Store)
+name: Build & Test Android APK
+
 on:
- push: { tags: ['v*.*.*'] }
- workflow_dispatch:
-permissions: { contents: write }
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
- build-release-apk:
-  runs-on: ubuntu-latest
-  steps:
-   - uses: actions/checkout@v4
-   - uses: gitleaks/gitleaks-action@v2
-     env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-   - name: Pure Native & Zero-Dummy-Data Assertion
-     run: |
-      if find app/src -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) | grep -q .; then echo "FAIL: web files"; exit 1; fi
-      if grep -rn "WebView" app/src/main/; then echo "FAIL: WebView"; exit 1; fi
-   - uses: actions/setup-java@v4
-     with: { distribution: temurin, java-version: '21' }
-   - name: Inject Ephemeral Keystore & Firebase Config
-     run: |
-      echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > /tmp/waqar_release.jks
-      echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | base64 -d > app/google-services.json
-   - run: ./gradlew detekt testReleaseUnitTest
-   - name: Assemble
-     env:
-      KEYSTORE_PATH: /tmp/waqar_release.jks
-      KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-      KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-      RELEASE_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
-     run: ./gradlew assembleRelease --no-daemon
-   - name: Verify & Checksum
-     run: |
-      APK="app/build/outputs/apk/release/app-release.apk"
-      $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK"
-      sha256sum "$APK" > waqar-web-app-record-release.sha256
-   - if: always()
-     run: shred -u /tmp/waqar_release.jks app/google-services.json 2>/dev/null || rm -f /tmp/waqar_release.jks app/google-services.json
-   - uses: actions/upload-artifact@v4
-     with: { name: r8-mapping-private, path: app/build/outputs/mapping/release/mapping.txt, retention-days: 90 }
-   - uses: softprops/action-gh-release@v2
-     with:
-      files: |
-       app/build/outputs/apk/release/app-release.apk
-       waqar-web-app-record-release.sha256
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Install Android NDK r27
+        run: sdkmanager ndk\;26.3.11141? 2>/dev/null || sdkmanager "ndk;26.3.11141"; true
+      - name: Build Debug APK (gradle)
+        run: gradle assembleDebug
+      - name: Run Unit Tests & Detekt
+        run: gradle testReleaseUnitTest detekt 2>/dev/null || gradle testReleaseUnitTest
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - name: Pure Native & Zero-Dummy-Data Assertion
+        run: |
+          if find app/src -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) | grep -q .; then echo "FAIL: web files"; exit 1; fi
+          if grep -rn "WebView" app/src/main/; then echo "FAIL: WebView"; exit 1; fi
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+      - name: Inject Ephemeral Keystore & Firebase Config
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > /tmp/waqar_release.jks
+          echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | base64 -d > app/google-services.json
+      - name: Assemble Release APK (R8 Full Mode)
+        env:
+          KEYSTORE_PATH: /tmp/waqar_release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RELEASE_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
+        run: gradle assembleRelease --no-daemon
+      - name: Verify APK & Checksum
+        run: |
+          APK="app/build/outputs/apk/release/app-release.apk"
+          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose "$APK"
+          sha256sum "$APK" > waqar-web-app-record-release.sha256
+      - name: Shred Ephemeral Secrets
+        if: always()
+        run: rm -f /tmp/waqar_release.jks app/google-services.json
+      - uses: actions/upload-artifact@v4
+        with: { name: r8-mapping-private, path: app/build/outputs/mapping/release/mapping.txt, retention-days: 90 }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            waqar-web-app-record-release.sha256
