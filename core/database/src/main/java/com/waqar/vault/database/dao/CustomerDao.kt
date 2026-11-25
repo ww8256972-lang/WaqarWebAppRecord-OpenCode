@@ -14,4 +14,6 @@ interface CustomerDao {
  @Query("DELETE FROM customers WHERE id = :id") suspend fun hardDelete(id: String)
  @Query("DELETE FROM customers") suspend fun deleteAll()
  @Query("SELECT * FROM customers WHERE importBatchId = :batchId") suspend fun getByBatch(batchId: String): List<CustomerEntity>
+ @Query("SELECT * FROM customers WHERE deletedAt IS NULL AND (shopName LIKE '%' || :q || '%' OR personName LIKE '%' || :q || '%' OR phoneE164 LIKE '%' || :q || '%') LIMIT 100")
+ suspend fun search(q: String): List<CustomerEntity>
 }

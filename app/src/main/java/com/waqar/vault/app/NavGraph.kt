@@ -5,7 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.waqar.vault.feature.admin.ui.AdminScreen
 import com.waqar.vault.feature.attachments.ui.AttachmentsScreen
-import com.waqar.vault.feature.auth.ui.LoginScreen
+import com.waqar.vault.feature.auth.ui.AuthScreen
 import com.waqar.vault.feature.bulk.ui.BulkScreen
 import com.waqar.vault.feature.communication.ui.CommunicationScreen
 import com.waqar.vault.feature.customers.ui.CustomersScreen
@@ -26,7 +26,7 @@ import com.waqar.vault.feature.updates.ui.UpdatesScreen
 @Composable
 fun AppNavGraph(nav: NavHostController) {
  NavHost(navController = nav, startDestination = "login") {
-  composable("login") { LoginScreen(onSuccess = { nav.navigate("dashboard") { popUpTo("login") { inclusive = true } } }) }
+  composable("login") { AuthScreen(onSuccess = { nav.navigate("dashboard") { popUpTo("login") { inclusive = true } } }) }
   composable("dashboard") { DashboardScreen(onOpenExcel = { nav.navigate("excel") }) }
   composable("excel") { ExcelImportScreen() }
   composable("customers") { CustomersScreen() }
