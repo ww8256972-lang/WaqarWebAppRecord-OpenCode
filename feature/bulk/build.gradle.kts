@@ -1,0 +1,6 @@
+plugins { id("com.android.library"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose"); id("com.google.dagger.hilt.android"); id("com.google.devtools.ksp") }
+android { namespace="com.waqar.vault.feature.bulk"; compileSdk=35; defaultConfig{minSdk=26}; buildFeatures{compose=true}; compileOptions{sourceCompatibility=JavaVersion.VERSION_17;targetCompatibility=JavaVersion.VERSION_17}; kotlinOptions{jvmTarget="17"} }
+dependencies {
+ implementation(project(":core:common")); implementation(project(":core:ui")); implementation(project(":core:database")); implementation(project(":core:security")); implementation(project(":core:network")); implementation(project(":core:sync")); implementation(project(":domain")); implementation(project(":data"))
+ implementation("androidx.compose.ui:ui:1.7.5"); implementation("androidx.compose.material3:material3:1.3.1"); implementation("androidx.compose.animation:animation:1.7.5"); implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"); implementation("androidx.hilt:hilt-navigation-compose:1.2.0"); implementation("androidx.navigation:navigation-compose:2.8.4"); implementation("com.google.dagger:hilt-android:2.52"); ksp("com.google.dagger:hilt-compiler:2.52"); implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+}

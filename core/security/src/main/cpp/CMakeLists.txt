@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(waqar_vault LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_library(waqar_vault SHARED vault.cpp)
+find_library(log-lib log)
+target_link_libraries(waqar_vault ${log-lib})

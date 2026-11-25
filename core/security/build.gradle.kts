@@ -1,0 +1,3 @@
+plugins { id("com.android.library"); id("org.jetbrains.kotlin.android") }
+android { namespace="com.waqar.vault.security"; compileSdk=35; defaultConfig{minSdk=26}; compileOptions{sourceCompatibility=JavaVersion.VERSION_17;targetCompatibility=JavaVersion.VERSION_17}; kotlinOptions{jvmTarget="17"}; externalNativeBuild{cmake{path=file("src/main/cpp/CMakeLists.txt")}}; defaultConfig{externalNativeBuild{cmake{cppFlags+="-std=c++20"}}} }
+dependencies { implementation(project(":core:common")); implementation("androidx.biometric:biometric:1.2.0-alpha05"); implementation("androidx.datastore:datastore-preferences:1.1.1"); implementation("com.google.crypto.tink:tink-android:1.15.0"); implementation("androidx.security:security-crypto:1.1.0-alpha06") }

@@ -1,0 +1,2 @@
+package com.waqar.vault.domain.model
+data class Customer(val id:String, val serialCode:String, val shopName:String, val personName:String, val phoneE164:String, val whatsappE164:String?=null, val hasWhatsapp:Boolean=false, val city:String?=null, val category:String?=null, val tags:List<String>=emptyList(), val status:String="ACTIVE", val priority:Int=0, val importBatchId:String?=null)

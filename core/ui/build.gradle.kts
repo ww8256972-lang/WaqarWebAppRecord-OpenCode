@@ -1,0 +1,3 @@
+plugins { id("com.android.library"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
+android { namespace="com.waqar.vault.ui"; compileSdk=35; defaultConfig{minSdk=26}; buildFeatures{compose=true}; compileOptions{sourceCompatibility=JavaVersion.VERSION_17;targetCompatibility=JavaVersion.VERSION_17}; kotlinOptions{jvmTarget="17"} }
+dependencies { implementation(project(":core:common")); implementation("androidx.compose.ui:ui:1.7.5"); implementation("androidx.compose.material3:material3:1.3.1"); implementation("androidx.compose.animation:animation:1.7.5"); implementation("dev.chrisbanes.haze:haze:1.0.0"); implementation("io.coil-kt:coil-compose:2.7.0") }
